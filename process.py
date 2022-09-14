@@ -6,30 +6,17 @@ import videoMaker
 import os
 import glob
 import notifBot
-import YTupload
 
-
-# Getting memes from API and formatting it into a list
-
-url = "https://meme-api.herokuapp.com/gimme/"
-
-count = 10
-# og_subreddits = ["memes","dankmemes","cursedcomments","me_irl","HistoryMemes","BlackPeopleTwitter","ihadastroke","technicallythetruth","trippinthroughtime","starterpacks","2meirl4meirl","deepfriedmeme","Meanjokes","suicidebywords","madlads"] Not accessible until protest is over
-
-subreddits =  ["memes","dankmemes","cursedcomments","me_irl","HistoryMemes","BlackPeopleTwitter","ihadastroke","technicallythetruth","trippinthroughtime","starterpacks","2meirl4meirl","suicidebywords","madlads"]
-
-notifBot.send("Task initiated!")
-
-def make(j):
+def make(subreddit, meme_count, iteration):
   try:
       # Getting response from API
     memeList = []
-    rand = random.randrange(0,len(subreddits))
-    resp = requests.get(url+subreddits[rand]+"/"+str(count)).json()
-    print("Subreddit: ",subreddits[rand])
+    resp = requests.get(url+subreddit+"/"+str(meme_count)).json()
+    print("Subreddit: ",subreddit)
     memeList = formatResponse.makeMemeList(resp)
   except:
     resp.status_code == 200
+    print("Request Error.")
   finally:
     # Calling formatResponse 
     print("Raw Data:\n")
@@ -37,49 +24,57 @@ def make(j):
     print("\n")
 
 
-    #Clearing all the old photos in the process folder
-
+  #Clearing all the old photos in the process folder
   files = glob.glob('processed/*')
   for f in files:
       os.remove(f)
 
 
-    #Reformat Image using editImage
-
   try:
+    #Reformat Image using editImage
     editImage.Reformat_Image(memeList)
+
+  except:
+    print("Failed to reformat.")
   finally:
     print("Done!")
 
-    #Making a video out of the Images
-  try:
-    videoMaker.makeVidFromImgSequence(memeList,j)
-  finally:
-    print("Video is done!")
+  videoMaker.makeVidFromImgSequence(memeList,iteration)
 
-for j in range(0,12):
-  print("\n Video #",j)
+  print("Video is done!")
+
+
+
+if __name__ == '__main__':
+  url = "https://meme-api.herokuapp.com/gimme/"
+
+  meme_count = 10
+  subreddit_count = 4
+
+  # og_subreddits = ["memes","dankmemes","cursedcomments","me_irl","HistoryMemes","BlackPeopleTwitter","ihadastroke","technicallythetruth","trippinthroughtime","starterpacks","2meirl4meirl","deepfriedmeme","Meanjokes","suicidebywords","madlads"] Not accessible until protest is over
+  subreddits =  ["animememes","goodanimemes","AOTmemes","animemes","attackontitanmemes","JoJoMemes","ShitPostCrusaders", "dankruto", "narutomemes"]
+
+  # shuffle so can choose between which one
+  random.shuffle(subreddits)
+
+
+  for i in range(subreddit_count):
+    # clear previous videos
+    if i == 0:
+      files = glob.glob('processVids/*')
+      for f in files:
+        os.remove(f)
+
+    print("\n Video #",i)
+    make(subreddits[i], meme_count, i)
+    
+  
+  # Export Video
   try:
-    make(j)
+    print("Combining all the clips")
+    videoMaker.combineVideos()
+    print("Video Completed!")
+    notifBot.send("Video Completed, Uploading to Youtube!")
+  
   except:
-    continue
-
-
-#Export Video
-try:
-  print("Combining all the clips")
-  videoMaker.combineVideos()
-  print("Video Completed!")
-  notifBot.send("Video Completed, Uploading to Youtube!")
-
-  upvid = YTupload.upload()
-
-  print("Video uploaded")
-  print(upvid[0] , upvid[1])
-  notifBot.sendImg(upvid[2])
-  notifBot.send("Video Uploaded, URL: https://www.youtube.com/watch?v="+upvid[0]+" and vid info:"+upvid[1])
-  notifBot.send("Video Uploaded, URL: https://www.youtube.com/watch?v="+upvid[0])
-  notifBot.send("Done!")
-
-except:
-  notifBot.send("Some error occured while exporting and uploading the video!")
+    notifBot.send("Some error occured while exporting and uploading the video!")
