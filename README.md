@@ -10,6 +10,7 @@ This is basically a compilation of memes that the bot scrapes from Reddit and co
 The modules used in this project are:
 - moviepy
 - PIL
+- opencv-python
 - requests
 - telegram
 - Youtube Data API v3
